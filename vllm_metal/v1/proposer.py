@@ -85,6 +85,8 @@ class MetalProposer(Protocol):
         """
         ...
 
+    def target_aux_hidden_state_layer_ids(self) -> tuple[int, ...]: ...
+
 
 class Gemma4MTPProposer:
     """:class:`MetalProposer` backed by the in-model Gemma4 MTP assistant.

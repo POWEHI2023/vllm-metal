@@ -25,6 +25,7 @@ class TargetModelForwardOutput:
 
     logits: mx.array
     hidden_states: mx.array | None = None
+    aux_hidden_states: tuple[mx.array, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -157,6 +158,7 @@ class ModelAdapter(Protocol):
         cache: Any | None = None,
         collect_hidden_states: bool = False,
         logits_indices: mx.array | None = None,
+        aux_hidden_state_layer_ids: tuple[int, ...] = (),
     ) -> TargetModelForwardOutput:
         """Run the target text model and optionally retain target hidden states.
 
