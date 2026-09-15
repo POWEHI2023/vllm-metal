@@ -79,7 +79,7 @@ def _proposer(
     *,
     committed_num_blocks: int = COMMITTED_NUM_BLOCKS,
     scratch_reserve_blocks: int = SCRATCH_RESERVE_BLOCKS,
-    defer_zero_k_ingest: bool = False,
+    allow_deferred_zero_k_ingest: bool = False,
 ) -> DraftModelProposer:
     proposer = DraftModelProposer(
         model=model,
@@ -89,7 +89,7 @@ def _proposer(
         num_layers=1,
         controller=SpeculativeDecodeController(),
         extract_logits=lambda output: output,
-        defer_zero_k_ingest=defer_zero_k_ingest,
+        allow_deferred_zero_k_ingest=allow_deferred_zero_k_ingest,
     )
     proposer.adopt_committed_group(COMMITTED_GROUP_INDEX)
     return proposer
@@ -323,7 +323,7 @@ def test_eager_zero_k_still_ingests() -> None:
 
 def test_lazy_zero_to_positive_k_catches_up_before_drafting() -> None:
     model = _PositionEncodingDraftModel()
-    proposer = _proposer(model, defer_zero_k_ingest=True)
+    proposer = _proposer(model, allow_deferred_zero_k_ingest=True)
     prompt = list(range(12))
 
     zero_k_drafts = proposer.propose(
@@ -355,7 +355,7 @@ def test_lazy_zero_to_positive_k_catches_up_before_drafting() -> None:
 def test_lazy_positive_to_zero_k_preserves_boundary() -> None:
     """Keep the physical boundary when traced decode progress reports zero."""
     model = _StubDraftModel()
-    proposer = _proposer(model, defer_zero_k_ingest=True)
+    proposer = _proposer(model, allow_deferred_zero_k_ingest=True)
 
     initial_state = _request_state(
         committed_block_ids=[0, 1],

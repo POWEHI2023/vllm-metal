@@ -152,13 +152,13 @@ class DraftModelProposer:
         controller: SpeculativeDecodeController,
         extract_logits: Callable[[Any], mx.array],
         merge_ingest_windows: bool = False,
-        defer_zero_k_ingest: bool = False,
+        allow_deferred_zero_k_ingest: bool = False,
     ) -> None:
         self._model = model
         self._block_size = block_size
         self._controller = controller
         self._extract_logits = extract_logits
-        self._defer_zero_k_ingest = defer_zero_k_ingest
+        self._allow_deferred_zero_k_ingest = allow_deferred_zero_k_ingest
         # Structural half of the ingest window gate (see `build`); the
         # operator half (VLLM_METAL_SPEC_VERIFY_WINDOW) is read per call
         # like the runner's `merge_verify_windows` property.  The same
@@ -219,7 +219,7 @@ class DraftModelProposer:
         scratch_reserve_blocks: int,
         block_size: int,
         dtype: mx.Dtype,
-        defer_zero_k_ingest: bool,
+        allow_deferred_zero_k_ingest: bool,
     ) -> DraftModelProposer:
         model, dims = _load_draft_model(speculative_config, parallel_config)
         total_blocks = committed_num_blocks + scratch_reserve_blocks
@@ -259,7 +259,7 @@ class DraftModelProposer:
             # vacuous, and `_load_draft_model` resolves one uniform
             # head_dim.  Only the decode kernel's head bound remains.
             merge_ingest_windows=dims.head_dim <= PA_WINDOW_MAX_HEAD_SIZE,
-            defer_zero_k_ingest=defer_zero_k_ingest,
+            allow_deferred_zero_k_ingest=allow_deferred_zero_k_ingest,
         )
 
     def adopt_committed_group(self, group_index: int) -> None:
@@ -294,7 +294,7 @@ class DraftModelProposer:
             )
 
         self._prune_finished(ctx.request_states)
-        if num_speculative_tokens <= 0 and self._defer_zero_k_ingest:
+        if num_speculative_tokens <= 0 and self._allow_deferred_zero_k_ingest:
             # Remember where lazy K=0 catch-up must start without running MLX.
             # No speculative lookahead is needed while K=0, so return its
             # private tail to the free pool. The speculative-write ledger is
